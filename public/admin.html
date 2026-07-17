@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GECO Flipbook Admin</title>
+<style>
+  :root{ --navy:#0F2A5C; --navy-dark:#0a1d40; --accent:#3b6fd6; --bg:#f4f6fa; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#1b2333;}
+  header{background:var(--navy);color:#fff;padding:20px 24px;display:flex;align-items:center;gap:14px;}
+  header img{height:36px;background:#fff;border-radius:6px;padding:4px;}
+  header h1{font-size:18px;margin:0;font-weight:700;}
+  main{max-width:820px;margin:0 auto;padding:28px 20px 60px;}
+  .card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(15,42,92,.08);margin-bottom:20px;}
+  label{display:block;font-size:13px;font-weight:700;color:#41506b;margin-bottom:6px;}
+  input[type="password"]{width:100%;padding:10px 12px;border:1px solid #d6dce6;border-radius:8px;font-size:14px;}
+  button{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+  button:hover{background:var(--navy-dark);}
+  button.danger{background:#b23b3b;}
+  button.danger:hover{background:#8f2c2c;}
+  .hidden{display:none !important;}
+  .status.err{color:#c0392b;font-size:13px;margin-top:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #e7ebf2;}
+  th{color:#67728a;font-size:12px;text-transform:uppercase;letter-spacing:.04em;}
+  td a{color:var(--accent);word-break:break-all;}
+  .empty{color:#67728a;font-size:14px;padding:20px 0;text-align:center;}
+  .backlink{display:block;text-align:center;margin-top:24px;font-size:13px;}
+  .backlink a{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="/geco-logo.jpg" alt="GECO logo" onerror="this.style.display='none'">
+  <h1>GECO Flipbook Admin</h1>
+</header>
+
+<main>
+  <div class="card" id="passwordCard">
+    <label for="pw">Access password</label>
+    <input type="password" id="pw" placeholder="Enter password">
+    <div style="margin-top:12px;"><button id="unlockBtn">View flipbooks</button></div>
+    <div class="status err hidden" id="pwStatus"></div>
+  </div>
+
+  <div class="card hidden" id="listCard">
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Created</th><th>Pages</th><th>Link</th><th></th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty hidden" id="emptyMsg">No flipbooks created yet.</div>
+  </div>
+
+  <div class="backlink"><a href="/">← Back to builder</a></div>
+</main>
+
+<script>
+let password = null;
+
+const pwInput = document.getElementById('pw');
+const unlockBtn = document.getElementById('unlockBtn');
+const pwStatus = document.getElementById('pwStatus');
+const passwordCard = document.getElementById('passwordCard');
+const listCard = document.getElementById('listCard');
+const tbody = document.getElementById('tbody');
+const emptyMsg = document.getElementById('emptyMsg');
+
+async function loadList() {
+  const res = await fetch('/api/list-flipbooks', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  if (res.status === 401) {
+    pwStatus.textContent = 'Incorrect password.';
+    pwStatus.classList.remove('hidden');
+    passwordCard.classList.remove('hidden');
+    listCard.classList.add('hidden');
+    return;
+  }
+  const data = await res.json();
+  passwordCard.classList.add('hidden');
+  listCard.classList.remove('hidden');
+  renderList(data.flipbooks || []);
+}
+
+function renderList(items) {
+  tbody.innerHTML = '';
+  emptyMsg.classList.toggle('hidden', items.length > 0);
+  for (const item of items) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.title}</td>
+      <td>${new Date(item.createdAt).toLocaleString()}</td>
+      <td>${item.imageCount}</td>
+      <td><a href="${item.url}" target="_blank">${item.url}</a></td>
+      <td></td>
+    `;
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Delete';
+    delBtn.className = 'danger';
+    delBtn.addEventListener('click', async () => {
+      if (!confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
+      delBtn.disabled = true;
+      await fetch('/api/delete-flipbook', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password, slug: item.slug })
+      });
+      loadList();
+    });
+    tr.lastElementChild.appendChild(delBtn);
+    tbody.appendChild(tr);
+  }
+}
+
+unlockBtn.addEventListener('click', () => {
+  password = pwInput.value;
+  pwStatus.classList.add('hidden');
+  loadList();
+});
+pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') unlockBtn.click(); });
+</script>
+</body>
+</html>
