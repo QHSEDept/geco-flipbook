@@ -7,7 +7,7 @@ export default async (req: Request, context: Context) => {
   }
 
   const body = await req.json().catch(() => ({}));
-  const expectedPassword = Netlify.env.get("FLIPBOOK_PASSWORD");
+  const expectedPassword = process.env.FLIPBOOK_PASSWORD;
   if (!expectedPassword || body.password !== expectedPassword) {
     return new Response(JSON.stringify({ error: "Incorrect password" }), {
       status: 401,
