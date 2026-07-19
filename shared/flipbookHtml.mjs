@@ -103,7 +103,7 @@ html,body{margin:0;height:100%;background:#111;font-family:Arial,sans-serif;over
  display:flex;flex-direction:column;align-items:center;justify-content:center;
  color:#fff;text-align:center;cursor:pointer;padding:6%;
 }
-#startScreen img{height:56px;background:#fff;border-radius:8px;padding:5px;margin-bottom:22px;}
+#startScreen img{height:84px;background:#fff;border-radius:10px;padding:7px;margin-bottom:24px;}
 #startScreen h1{font-size:clamp(18px,4vw,28px);margin:0 0 10px 0;}
 #startScreen p{color:#9fb0cc;font-size:clamp(12px,2vw,15px);max-width:80%;margin:0;}
 #startScreen .rotIcon{font-size:26px;margin-top:18px;opacity:.85;display:none;}
@@ -115,7 +115,7 @@ html,body{margin:0;height:100%;background:#111;font-family:Arial,sans-serif;over
 
 <div id="startScreen">
   <img src="${LOGO_SRC}" alt="GECO logo">
-  <h1>GECO — HSE Flipbook</h1>
+  <h1>${safeTitle}</h1>
   <p>Tap anywhere to begin in full screen. Space bar or tap to flip forward.</p>
   <div class="rotIcon">&#8635; Rotate your device for the best view</div>
 </div>
